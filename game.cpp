@@ -24,16 +24,34 @@ void Game::setMines() {
     for (int i = 0; i < numMines; i++) {
         int x = rand() % width;
         int y = rand() % height;
+        while (board[x][y] == -1) {
+            x = rand() % width;
+            y = rand() % height;
+        }
         mines[i][0] = x;
         mines[i][1] = y;
         board[x][y] = -1;
+        //populate the number hints around
+        for (int i = -1; i < 2; i++) {
+            for (int j = -1; j < 2; j++) {
+                int xi = x+i;
+                int yi = y+j;
+                if (xi >= 0 && xi < height && yi >= 0 && yi < width && !(i == 0 && j == 0) && board[xi][yi] != -1) {
+                    board[xi][yi] += 1;
+                }
+            }
+        }
     }
 }
 
 void Game::printBoard() {
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            printf("%d ",board[i][j]);
+            if (board[i][j] < 0) {
+                printf("* ");
+            } else {
+                printf("%d ",board[i][j]);
+            }
         }
         printf("\n");
     }
