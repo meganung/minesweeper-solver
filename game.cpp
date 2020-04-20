@@ -22,8 +22,8 @@ Game::Game(int w, int h, int n) {
 void Game::setMines() {
     srand(time(NULL));
     for (int i = 0; i < numMines; i++) {
-        int x = rand() % width;
-        int y = rand() % height;
+        int x = rand() % height;
+        int y = rand() % width;
         while (board[x][y] == -1) {
             x = rand() % width;
             y = rand() % height;
@@ -44,13 +44,13 @@ void Game::setMines() {
     }
 }
 
-void Game::printBoard() {
+void Game::printBoard(int** b) {
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            if (board[i][j] < 0) {
+            if (b[i][j] < 0) {
                 printf("* ");
             } else {
-                printf("%d ",board[i][j]);
+                printf("%d ",b[i][j]);
             }
         }
         printf("\n");
