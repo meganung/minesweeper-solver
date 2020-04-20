@@ -14,6 +14,8 @@ public:
     int** mines; //2d list numMines x 2 that stores the coordinates of the mines
     int** board; //2d list width x height storing the mines
     int** playboard; // 2d list width x height
+    int* parboard;
+    int* parplayboard;
     list<tuple<int,int>> playmines;
     int* parplaymines;
     Game(int w, int h, int n);

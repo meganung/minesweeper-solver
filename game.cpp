@@ -8,6 +8,8 @@ Game::Game(int w, int h, int n) {
     height = h;
     numMines = n;
     mines = (int**)malloc(numMines * sizeof(int*));
+    parboard = (int*)calloc(height*width, sizeof(int));
+    parplayboard = (int*)calloc(height*width, sizeof(int));
     for (int i = 0; i < numMines; i++) {
         mines[i] = (int*)calloc(2, sizeof(int));
     }
@@ -17,6 +19,7 @@ Game::Game(int w, int h, int n) {
         board[i] = (int*)calloc(width, sizeof(int));
         playboard[i] = (int*)calloc(width, sizeof(int));
     }
+
 }
 
 void Game::setMines() {
@@ -31,6 +34,7 @@ void Game::setMines() {
         mines[i][0] = x;
         mines[i][1] = y;
         board[x][y] = -1;
+        parboard[x * width + y] = -1;
         //populate the number hints around
         for (int i = -1; i < 2; i++) {
             for (int j = -1; j < 2; j++) {
@@ -38,6 +42,7 @@ void Game::setMines() {
                 int yi = y+j;
                 if (xi >= 0 && xi < height && yi >= 0 && yi < width && !(i == 0 && j == 0) && board[xi][yi] != -1) {
                     board[xi][yi] += 1;
+                    parboard[xi * width + yi] += 1;
                 }
             }
         }

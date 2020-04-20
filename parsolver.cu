@@ -24,25 +24,26 @@ __device__ float generate(curandState* globalState, int ind)
     return RANDOM;
 }
 
-__device__ void chooseRandomMove(int** playboard, int** board, int height, int width, curandState* globalState, int* resx, int* resy) {
-
+__device__ void chooseRandomMove(int* playboard, int* board, int height, int width, curandState* globalState, int* resx, int* resy) {
+    printf("IN CHOOSE RM\n");
     *resx = int(generate(globalState, 0) * height);
     *resy = int(generate(globalState, 0) * width);
-    while (playboard[*resx][*resy] == 1) {
+    printf("in crm: %d %d\n",*resx, *resy);
+    while (playboard[*resx * width + *resy] == 1) {
         *resx = (int)(generate(globalState, 0) * height);
         *resy = (int)(generate(globalState, 0) * width);
     }
 }
 
 //count uncovered adj mines (meaning already marked)
-__device__ void countAdjMines(int** playboard, int** board, int height, int width, int x, int y, int* res) {
+__device__ void countAdjMines(int* playboard, int* board, int height, int width, int x, int y, int* res) {
     int c = 0;
     for (int i = -1; i < 2; i++) {
         for (int j = -1; j < 2; j++) {
             int xi = x+i;
             int yi = y+j;
             if (xi >= 0 && xi < height && yi >= 0 && yi < width && !(i == 0 && j == 0)) {
-                if (playboard[xi][yi] == 1 && board[xi][yi] == -1) {
+                if (playboard[xi * width + yi] == 1 && board[xi * width + yi] == -1) {
                     c++;
                 } 
             }
@@ -52,15 +53,15 @@ __device__ void countAdjMines(int** playboard, int** board, int height, int widt
 }
 
 //reveal neighbors not revealed yet
-__device__  void revealNeighbors(int** playboard, int** board, int height, int width, int x, int y) {
+__device__  void revealNeighbors(int* playboard, int* board, int height, int width, int x, int y) {
     for (int i = -1; i < 2; i++) {
         for (int j = -1; j < 2; j++) {
             int xi = x+i;
             int yi = y+j;
             if (xi >= 0 && xi < height && yi >= 0 && yi < width && !(i == 0 && j == 0)) {
-                if (playboard[xi][yi] == 0) {
-                    playboard[xi][yi] = 1;
-                    if (board[xi][yi] == -1) {
+                if (playboard[xi * width + yi] == 0) {
+                    playboard[xi * width + yi] = 1;
+                    if (board[xi * width + yi] == -1) {
                         printf("DID A BAD\n");
                     }
                 } 
@@ -69,14 +70,14 @@ __device__  void revealNeighbors(int** playboard, int** board, int height, int w
     } 
 }
 
-__device__  void countUnrevealed(int** playboard, int** board, int height, int width, int x, int y, int* res) {
+__device__  void countUnrevealed(int* playboard, int* board, int height, int width, int x, int y, int* res) {
     int c = 0;
     for (int i = -1; i < 2; i++) {
         for (int j = -1; j < 2; j++) {
             int xi = x+i;
             int yi = y+j;
             if (xi >= 0 && xi < height && yi >= 0 && yi < width && !(i == 0 && j == 0)) {
-                if (playboard[xi][yi] == 0) {
+                if (playboard[xi * width + yi] == 0) {
                     c++;
                 } 
             }
@@ -84,14 +85,14 @@ __device__  void countUnrevealed(int** playboard, int** board, int height, int w
     } 
     *res = c;
 }
-__device__  void markNeighbors(int** playboard, int** board, int height, int width, int* device_result, int* minesFound, int x, int y) {
+__device__  void markNeighbors(int* playboard, int* board, int height, int width, int* device_result, int* minesFound, int x, int y) {
     for (int i = -1; i < 2; i++) {
         for (int j = -1; j < 2; j++) {
             int xi = x+i;
             int yi = y+j;
             if (xi >= 0 && xi < height && yi >= 0 && yi < width && !(i == 0 && j == 0)) {
-                if (playboard[xi][yi] == 0) {
-                    playboard[xi][yi] = 1;
+                if (playboard[xi * width + yi] == 0) {
+                    playboard[xi * width + yi] = 1;
                     //TODO: make atomic
                     device_result[*minesFound*2] = xi;
                     device_result[*minesFound*2 + 1] = yi;
@@ -103,37 +104,40 @@ __device__  void markNeighbors(int** playboard, int** board, int height, int wid
     
 }
 
-__global__ void parSolveKernel(int** device_board, int** device_playboard, int* device_result, int* minesFound, int height, int width, int numMines, curandState* globalState) {
+__global__ void parSolveKernel(int* device_board, int* device_playboard, int* device_result, int* minesFound, int height, int width, int numMines, curandState* globalState) {
+    printf("IN PARSOLVEKERNEL\n");
     int guesses = 0;  
     while(*minesFound < numMines) {
         int x, y;
+        printf("IN THE WHOLE LOO\n");
         chooseRandomMove(device_playboard, device_board, height, width, globalState, &x, &y);
         guesses++;
-        if (device_board[x][y] == -1) {
+        printf("%d %d\n",x,y);
+        if (device_board[x * width + y] == -1) {
             printf("\n");
             printf("oops %dth guess was a bomb big sad\n",guesses);
             return;
         } else {
             //reveal
-            device_playboard[x][y] = 1;
+            device_playboard[x * width + y] = 1;
         }
         bool progress = true;
         while (progress) {
             progress = false;
             for (int i = 0; i < height; i++) {
                 for (int j = 0; j < width; j++) {
-                    if (device_playboard[i][j] == 1 && device_board[i][j] != -1 ) { //clear square
+                    if (device_playboard[i * width + j] == 1 && device_board[i * width + j] != -1 ) { //clear square
                         int adjmines;
                         countAdjMines(device_playboard, device_board, height, width, i,j, &adjmines);
                         int unrevealed;
                         countUnrevealed(device_playboard, device_board, height, width, i,j, &unrevealed);
                         if (unrevealed != 0 ){
-                            if (adjmines == device_board[i][j]) { //all mines found
+                            if (adjmines == device_board[i * width + j]) { //all mines found
                                 //reveal neighbors
                                 progress = true;
                                 revealNeighbors(device_playboard, device_board, height, width, i,j);
                             }
-                            if (unrevealed == device_board[i][j] - adjmines && unrevealed >= 0) {
+                            if (unrevealed == device_board[i * width + j] - adjmines && unrevealed >= 0) {
                                 progress = true;
                                 markNeighbors(device_playboard, device_board, height, width, device_result, minesFound, i,j);
                             }
@@ -164,19 +168,21 @@ void Game::parSolve() {
     const int blocks = 1;
     // int N = width * height;
 
-    int** device_board;
-    int** device_playboard;
+    int* device_board;
+    int* device_playboard;
     int* device_result;
 
     //
     // TODO allocate device memory buffers on the GPU using cudaMalloc
     //
 
-
-
-    cudaMalloc(&device_board,sizeof(int*)*height);
-    cudaMalloc(&device_playboard,sizeof(int*)*height);
+    printf("01\n");
+    int* minesfound;
+    cudaMalloc(&minesfound,sizeof(int));
+    cudaMalloc(&device_board,sizeof(int)*height*width);
+    cudaMalloc(&device_playboard,sizeof(int)*height*width);
     cudaMalloc(&device_result,sizeof(int)*numMines*2);
+    printf("02\n");
 
 
 
@@ -187,25 +193,29 @@ void Game::parSolve() {
     //
     // TODO copy input arrays to the GPU using cudaMemcpy
     //
-    for (int i = 0; i < height; i++) {
-        cudaMalloc(&device_board[i],sizeof(int)*width);
-        cudaMalloc(&device_playboard[i],sizeof(int)*width);
-        cudaMemcpy(device_board[i],board[i],sizeof(int)*width,cudaMemcpyHostToDevice);
-        cudaMemcpy(device_playboard[i],playboard[i],sizeof(int)*width,cudaMemcpyHostToDevice);
-    }
+    
 
+    cudaMemcpy(device_board,parboard,sizeof(int)*width*height,cudaMemcpyHostToDevice);
+    cudaMemcpy(device_playboard,parplayboard,sizeof(int)*width*height,cudaMemcpyHostToDevice);
     cudaMemcpy(device_result,parplaymines,sizeof(int)*numMines*2,cudaMemcpyHostToDevice);
 
+    printf("04\n");
 
     double startTimeKernel = CycleTimer::currentSeconds();
     // run kernel
-    int minesfound = 0;
+
+    //random
     curandState* devStates;
+    printf("1\n");
     cudaMalloc (&devStates, width * height * sizeof(curandState));
     srand(time(0));
     int seed = rand();
+    printf("2\n");
     setup_kernel<<<blocks, threadsPerBlock>>>(devStates,seed);
-    parSolveKernel<<<blocks, threadsPerBlock>>>(device_board, device_playboard, device_result, &minesfound, height, width, numMines, devStates);
+    printf("3\n");
+    parSolveKernel<<<blocks, threadsPerBlock>>>(device_board, device_playboard, device_result, minesfound, height, width, numMines, devStates);
+    printf("4\n");
+
     cudaThreadSynchronize();
     double endTimeKernel = CycleTimer::currentSeconds(); 
 
@@ -213,9 +223,8 @@ void Game::parSolve() {
     // TODO copy result from GPU using cudaMemcpy
     //
 
-    // cudaMemcpy(playboard,device_playboard,sizeof(float)*N,cudaMemcpyDeviceToHost);
-    // cudaMemcpy(board,device_board,sizeof(float)*N,cudaMemcpyDeviceToHost);
-    cudaMemcpy(parplaymines,device_result,sizeof(tuple<int,int>)*numMines,cudaMemcpyDeviceToHost);
+
+    cudaMemcpy(parplaymines,device_result,sizeof(int)*2*numMines,cudaMemcpyDeviceToHost);
 
 
 
