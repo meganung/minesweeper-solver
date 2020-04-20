@@ -15,6 +15,7 @@ public:
     int** board; //2d list width x height storing the mines
     int** playboard; // 2d list width x height
     list<tuple<int,int>> playmines;
+    int* parplaymines;
     Game(int w, int h, int n);
     void printBoard(int** b);
     void setMines();
@@ -24,6 +25,7 @@ public:
     void revealNeighbors(int x, int y);
     tuple<int,int> chooseRandomMove();
     void seqSolve();
+    void parSolve();
 };
 
 #endif

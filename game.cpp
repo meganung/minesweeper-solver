@@ -11,11 +11,11 @@ Game::Game(int w, int h, int n) {
     for (int i = 0; i < numMines; i++) {
         mines[i] = (int*)calloc(2, sizeof(int));
     }
-    board = (int**)malloc(width * sizeof(int*));
-    playboard = (int**)malloc(width * sizeof(int*));
+    board = (int**)malloc(height * sizeof(int*));
+    playboard = (int**)malloc(height * sizeof(int*));
     for (int i = 0; i < height; i++) {
-        board[i] = (int*)calloc(height, sizeof(int));
-        playboard[i] = (int*)calloc(height, sizeof(int));
+        board[i] = (int*)calloc(width, sizeof(int));
+        playboard[i] = (int*)calloc(width, sizeof(int));
     }
 }
 

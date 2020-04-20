@@ -5,17 +5,19 @@
 using namespace std;
 
 int main() {
-    Game* game = new Game(8,8,5);
+    Game* game = new Game(400,400,75);
     game->setMines();
-    game->printBoard(game->board);
-    game->seqSolve();
+    // game->printBoard(game->board);
+    printf("starting\n");
+    // game->seqSolve();
+    game->parSolve();
     printf("MY MINES I FOUND: \n");
     for (auto const& i: game->playmines) {
         int x = get<0>(i);
         int y = get<1>(i);
         printf("%d, %d\n",x,y);
 	}
-    printf("playbaord\n");
-    game->printBoard(game->playboard);
+    // printf("playboard\n");
+    // game->printBoard(game->playboard);
     return 0;
 }
