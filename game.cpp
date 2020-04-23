@@ -22,6 +22,11 @@ Game::Game(int w, int h, int n) {
 
 }
 
+
+float Game::toBW(int bytes, float sec) {
+    return static_cast<float>(bytes) / (1024. * 1024. * 1024.) / sec;
+  }
+
 void Game::setMines() {
     srand(time(NULL));
     for (int i = 0; i < numMines; i++) {
@@ -60,4 +65,16 @@ void Game::printBoard(int** b) {
         }
         printf("\n");
     }
+}
+
+bool Game::parResultCheck() {
+    for (int i = 0; i < numMines*2; i+=2){
+        if (board[parplaymines[i]][parplaymines[i+1]] != -1) {
+            printf("RESULT CHECK FAILED: %d %d\n",parplaymines[i],parplaymines[i+1]);
+            return false;
+        }
+    }
+    return true;
+        
+
 }

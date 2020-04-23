@@ -2,6 +2,7 @@
 #include <list> 
 #include <string>
 #include <tuple>
+#include "CycleTimer.h"
 
 //using namespace Game;
 using namespace std;
@@ -83,6 +84,10 @@ void Game::markNeighbors(int x, int y) {
 }
 
 void Game::seqSolve() {
+
+    int totalBytes = sizeof(int) * height * width;
+    double startTime = CycleTimer::currentSeconds();
+
     int guesses = 0;  
     while(playmines.size() < numMines) {
         tuple<int,int> rmove = chooseRandomMove();
@@ -122,4 +127,11 @@ void Game::seqSolve() {
             }
         }
     }
+
+    double endTime = CycleTimer::currentSeconds();
+
+
+    double overallDuration = endTime - startTime;
+    printf("Overall: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * overallDuration, toBW(totalBytes, overallDuration));
+    
 }

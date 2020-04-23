@@ -3,6 +3,7 @@
 #include <stdlib.h> 
 #include <tuple>
 #include <list>
+#include <cassert>
 
 using namespace std; 
 
@@ -28,6 +29,9 @@ public:
     tuple<int,int> chooseRandomMove();
     void seqSolve();
     void parSolve();
+    bool parResultCheck();
+
+    float toBW(int bytes, float sec);
 };
 
 #endif
