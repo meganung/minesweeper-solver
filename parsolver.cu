@@ -168,24 +168,17 @@ void Game::parSolve() {
     int totalBytes = sizeof(int) * height * width;
 
     // compute number of blocks and threads per block
-    // const int threadsPerBlock = 512;
-    // const int blocks = (N + threadsPerBlock - 1) / threadsPerBlock;
-    // const int threadsPerBlock = 1;
-    // const int blocks = 1;
+
     dim3 blockDim(BLOCK_DIM, BLOCK_DIM);
     dim3 gridDim((width + (blockDim.x * CHUNK_DIM) - 1) / (blockDim.x * CHUNK_DIM), (height + (blockDim.y * CHUNK_DIM) - 1) / (blockDim.y * CHUNK_DIM));
-    printf("%d %d\n",gridDim.x, gridDim.y);
+    // printf("%d %d\n",gridDim.x, gridDim.y);
 
-    // int N = width * height;
 
     int* device_board;
     int* device_playboard;
     int* device_result;
 
-    //
-    // TODO allocate device memory buffers on the GPU using cudaMalloc
-    //
-
+    // allocate device memory buffers on the GPU using cudaMalloc
     int* minesfound;
     cudaMalloc(&minesfound,sizeof(int));
     cudaMalloc(&device_board,sizeof(int)*height*width);
@@ -202,7 +195,7 @@ void Game::parSolve() {
     cudaMemset(minesfound,-1,sizeof(int));
     cudaMemcpy(device_board,parboard,sizeof(int)*width*height,cudaMemcpyHostToDevice);
     cudaMemcpy(device_playboard,parplayboard,sizeof(int)*width*height,cudaMemcpyHostToDevice);
-    cudaMemcpy(device_result,playmines,sizeof(int)*numMines*2,cudaMemcpyHostToDevice);
+    cudaMemcpy(device_result,parplaymines,sizeof(int)*numMines*2,cudaMemcpyHostToDevice);
 
     double startTimeKernel = CycleTimer::currentSeconds();
     // run kernel
@@ -220,7 +213,7 @@ void Game::parSolve() {
     double endTimeKernel = CycleTimer::currentSeconds(); 
 
     // copy result from GPU using cudaMemcpy
-    cudaMemcpy(playmines,device_result,sizeof(int)*2*numMines,cudaMemcpyDeviceToHost);
+    cudaMemcpy(parplaymines,device_result,sizeof(int)*2*numMines,cudaMemcpyDeviceToHost);
 
 
 
@@ -237,11 +230,12 @@ void Game::parSolve() {
     double kernelDuration = endTimeKernel - startTimeKernel;
     printf("Kernel: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * kernelDuration, toBW(totalBytes, kernelDuration));
 
-    // TODO free memory buffers on the GPU
+    // free memory buffers on the GPU
     cudaFree(device_board);
     cudaFree(device_playboard);
     cudaFree(device_result);
 
+    // return overallDuration;
 }
 
 void
