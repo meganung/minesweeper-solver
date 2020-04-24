@@ -17,8 +17,8 @@ public:
     int** playboard; // 2d list width x height
     int* parboard;
     int* parplayboard;
-    list<tuple<int,int>> playmines;
-    int* parplaymines;
+    int* playmines; // 1d list size numMines x 2 
+    int playminecount;
     Game(int w, int h, int n);
     void printBoard(int** b);
     void setMines();
@@ -29,7 +29,7 @@ public:
     tuple<int,int> chooseRandomMove();
     void seqSolve();
     void parSolve();
-    bool parResultCheck();
+    bool resultCheck();
 
     float toBW(int bytes, float sec);
 };

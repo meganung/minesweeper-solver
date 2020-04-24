@@ -75,7 +75,9 @@ void Game::markNeighbors(int x, int y) {
             if (xi >= 0 && xi < height && yi >= 0 && yi < width && !(i == 0 && j == 0)) {
                 if (playboard[xi][yi] == 0) {
                     playboard[xi][yi] = 1;
-                    playmines.push_back(make_tuple(xi,yi));
+                    playmines[playminecount * 2] = xi;
+                    playmines[playminecount * 2 + 1] = yi;
+                    playminecount++;
                 }
             }
         }
@@ -89,7 +91,7 @@ void Game::seqSolve() {
     double startTime = CycleTimer::currentSeconds();
 
     int guesses = 0;  
-    while(playmines.size() < numMines) {
+    while(playminecount < numMines) {
         tuple<int,int> rmove = chooseRandomMove();
         int x = get<0>(rmove);
         int y = get<1>(rmove);
