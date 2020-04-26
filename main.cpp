@@ -51,6 +51,7 @@ int main(int argc,char* argv[]) {
     }
     if (runseq) {
         //SEQUENTIAL
+        printf("SEQUENTIAL\n");
         game->seqSolve();
         assert(game->resultCheck(0));
         if (print) {
@@ -63,6 +64,8 @@ int main(int argc,char* argv[]) {
     }
     if (runpar) {
         //PARALLEL
+        printf("PARALLEL\n");
+        
         game->parSolve();
         assert(game->resultCheck(1));
 

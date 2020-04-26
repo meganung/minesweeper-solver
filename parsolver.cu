@@ -8,8 +8,8 @@
 #include <curand.h>
 #include <curand_kernel.h>
 
-#define BLOCK_DIM 10
-#define CHUNK_DIM 20
+#define BLOCK_DIM 5
+#define CHUNK_DIM 10
 
 using namespace std;
 
@@ -154,6 +154,53 @@ __global__ void parSolveKernel(int* device_board, int* device_playboard, int* de
     }
 }
 
+__global__ void randomMoveKernel(int* device_board, int* device_playboard, int* device_result, int* minesFound, int height, int width, int numMines, curandState* globalState) {
+    int x, y;
+    chooseRandomMove(device_playboard, device_board, height, width, globalState, &x, &y);
+    if (device_board[x * width + y] == -1) {
+        printf("\n");
+        printf("oops some guess was a bomb big sad\n");
+        *minesFound = numMines;
+        return;
+    } else {
+        //reveal
+        device_playboard[x * width + y] = 1;
+    }
+}
+
+__global__ void noGuessKernel(int* device_board, int* device_playboard, int* device_result, int* minesFound, int height, int width, int numMines, curandState* globalState) {
+    int startheight = (blockIdx.y * blockDim.y + (threadIdx.y)) * CHUNK_DIM;
+    int endheight = min(height, startheight + CHUNK_DIM);
+    int startwidth = (blockIdx.x * blockDim.x + (threadIdx.x)) * CHUNK_DIM;
+    int endwidth = min(width, startwidth + CHUNK_DIM);
+    bool progress = true;
+    while (progress) {
+        progress = false;
+        for (int i = startheight; i < endheight; i++) {
+            for (int j = startwidth; j < endwidth; j++) {
+                if (device_playboard[i * width + j] == 1 && device_board[i * width + j] != -1 ) { //clear square
+                    int adjmines;
+                    countAdjMines(device_playboard, device_board, height, width, i,j, &adjmines);
+                    int unrevealed;
+                    countUnrevealed(device_playboard, device_board, height, width, i,j, &unrevealed);
+                    if (unrevealed != 0 ){
+                        if (adjmines == device_board[i * width + j]) { //all mines found
+                            //reveal neighbors
+                            progress = true;
+                            revealNeighbors(device_playboard, device_board, height, width, i,j);
+                        }
+                        if (unrevealed == device_board[i * width + j] - adjmines && unrevealed >= 0) {
+                            progress = true;
+                            markNeighbors(device_playboard, device_board, height, width, device_result, minesFound, i,j);
+                        }
+                    }
+                    
+                }
+            }
+        }
+    }
+}
+
 __global__ void setup_kernel( curandState* state, unsigned long seed )
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -171,7 +218,7 @@ void Game::parSolve() {
 
     dim3 blockDim(BLOCK_DIM, BLOCK_DIM);
     dim3 gridDim((width + (blockDim.x * CHUNK_DIM) - 1) / (blockDim.x * CHUNK_DIM), (height + (blockDim.y * CHUNK_DIM) - 1) / (blockDim.y * CHUNK_DIM));
-    // printf("%d %d\n",gridDim.x, gridDim.y);
+    printf("%d %d\n",gridDim.x, gridDim.y);
 
 
     int* device_board;
@@ -184,8 +231,6 @@ void Game::parSolve() {
     cudaMalloc(&device_board,sizeof(int)*height*width);
     cudaMalloc(&device_playboard,sizeof(int)*height*width);
     cudaMalloc(&device_result,sizeof(int)*numMines*2);
-
-
 
 
     // start timing after allocation of device memory
@@ -207,7 +252,18 @@ void Game::parSolve() {
     int seed = rand();
     setup_kernel<<<gridDim, blockDim>>>(devStates,seed);
 
-    parSolveKernel<<<gridDim, blockDim>>>(device_board, device_playboard, device_result, minesfound, height, width, numMines, devStates);
+    // NO WAITING
+    // parSolveKernel<<<gridDim, blockDim>>>(device_board, device_playboard, device_result, minesfound, height, width, numMines, devStates);
+
+    /* START OF WAITING */
+    int hostMinesFound = 0;
+    while(hostMinesFound < numMines - 1) {
+        randomMoveKernel<<<1, 1>>>(device_board, device_playboard, device_result, minesfound, height, width, numMines, devStates);
+        noGuessKernel<<<gridDim, blockDim>>>(device_board, device_playboard, device_result, minesfound, height, width, numMines, devStates);
+        cudaMemcpy(&hostMinesFound,minesfound,sizeof(int),cudaMemcpyDeviceToHost);
+
+    }
+    // END OF WAITING
 
     cudaThreadSynchronize();
     double endTimeKernel = CycleTimer::currentSeconds(); 
