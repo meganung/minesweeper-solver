@@ -16,9 +16,11 @@ Game::Game(int w, int h, int n) {
     }
     board = (int**)malloc(height * sizeof(int*));
     playboard = (int**)malloc(height * sizeof(int*));
+    playboard2 = (int**)malloc(height * sizeof(int*));
     for (int i = 0; i < height; i++) {
         board[i] = (int*)calloc(width, sizeof(int));
         playboard[i] = (int*)calloc(width, sizeof(int));
+        playboard2[i] = (int*)calloc(width, sizeof(int));
     }
     playmines = (int*)calloc(numMines * 2, sizeof(int));
     parplaymines = (int*)calloc(numMines * 2, sizeof(int));
@@ -30,6 +32,7 @@ void Game::clearPlayboards() {
         for (int j = 0; j < width; j++) {
             parplayboard[i*width + j] = 0;
             playboard[i][j] = 0;
+            playboard2[i][j] = 0;
         }
     }
     for (int i = 0; i < 2*numMines; i++) {

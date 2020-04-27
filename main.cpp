@@ -73,6 +73,8 @@ int main(int argc,char* argv[]) {
         printf("Sequential Overall: %.3f ms\t\t\n", 1000.f * seqtime);
 
     }
+    game->clearPlayboards();
+
     if (runpar) {
         //PARALLEL
         // printf("starting PARALLEL\n");
