@@ -85,7 +85,7 @@ __device__  void countUnrevealed(int* playboard, int* board, int height, int wid
     } 
     *res = c;
 }
-__device__  void markNeighbors(int* playboard, int* board, int height, int width, int* device_result, int* minesFound, int x, int y) {
+__device__  void markNeighbors(int* playboard, int* board, int height, int width, int* device_result, int* minesFound, int x, int y, int numMines) {
     for (int i = -1; i < 2; i++) {
         for (int j = -1; j < 2; j++) {
             int xi = x+i;
@@ -94,9 +94,10 @@ __device__  void markNeighbors(int* playboard, int* board, int height, int width
                 if (playboard[xi * width + yi] == 0) {
                     playboard[xi * width + yi] = 1;
                     int ogval = atomicAdd(minesFound, 1);
-                    //TODO: check that bounds are oak (minesFound < numMines)
-                    device_result[(ogval+1)*2] = xi;
-                    device_result[(ogval+1)*2 + 1] = yi;
+                    if (ogval < numMines) {
+                        device_result[(ogval+1)*2] = xi;
+                        device_result[(ogval+1)*2 + 1] = yi;
+                    }
                 }
             }
         }
@@ -142,7 +143,7 @@ __global__ void parSolveKernel(int* device_board, int* device_playboard, int* de
                             }
                             if (unrevealed == device_board[i * width + j] - adjmines && unrevealed >= 0) {
                                 progress = true;
-                                markNeighbors(device_playboard, device_board, height, width, device_result, minesFound, i,j);
+                                markNeighbors(device_playboard, device_board, height, width, device_result, minesFound, i,j,numMines);
                             }
                         }
                         
@@ -200,7 +201,7 @@ __global__ void noGuessKernel(int* device_board, int* device_playboard, int* dev
                             if (unrevealed == device_board[i * width + j] - adjmines && unrevealed >= 0) {
                                 if (progress == false) notdone[blockId] = 1;                                
                                 progress = true;
-                                markNeighbors(device_playboard, device_board, height, width, device_result, minesFound, i,j);
+                                markNeighbors(device_playboard, device_board, height, width, device_result, minesFound, i,j, numMines);
                             }
                         }
                         
