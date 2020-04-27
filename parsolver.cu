@@ -168,17 +168,21 @@ __global__ void randomMoveKernel(int* device_board, int* device_playboard, int* 
     }
 }
 
-__global__ void noGuessKernel(int* device_board, int* device_playboard, int* device_result, int* minesFound, int height, int width, int numMines, curandState* globalState, int* notdone) {
+__global__ void noGuessKernel(int* device_board, int* device_playboard, int* device_result, int* minesFound, int height, int width, int numMines, curandState* globalState) {
     int blockId = blockIdx.y * gridDim.x + blockIdx.x;
     int startheight = (blockIdx.y * blockDim.y + (threadIdx.y)) * CHUNK_DIM;
     int endheight = min(height, startheight + CHUNK_DIM);
     int startwidth = (blockIdx.x * blockDim.x + (threadIdx.x)) * CHUNK_DIM;
     int endwidth = min(width, startwidth + CHUNK_DIM);
+
+    //closer waiting shared mem
+    __shared__ int notdone;
+    notdone = 1;
     
     //closer waiting
-    while (notdone[blockId]) {
+    while (notdone) {
         __syncthreads();
-        if (threadIdx.x == 0 && threadIdx.y == 0) notdone[blockId] = 0;
+        if (threadIdx.x == 0 && threadIdx.y == 0) notdone = 0;
         __syncthreads();
         //end closer waiting
         bool progress = true;
@@ -194,12 +198,17 @@ __global__ void noGuessKernel(int* device_board, int* device_playboard, int* dev
                         if (unrevealed != 0 ){
                             if (adjmines == device_board[i * width + j]) { //all mines found
                                 //reveal neighbors
-                                if (progress == false) notdone[blockId] = 1;
+
+                                //closer waiting
+                                if (progress == false) notdone = 1;
+
                                 progress = true;
                                 revealNeighbors(device_playboard, device_board, height, width, i,j);
                             }
                             if (unrevealed == device_board[i * width + j] - adjmines && unrevealed >= 0) {
-                                if (progress == false) notdone[blockId] = 1;                                
+                                //closer waiting
+                                if (progress == false) notdone = 1;                             
+
                                 progress = true;
                                 markNeighbors(device_playboard, device_board, height, width, device_result, minesFound, i,j, numMines);
                             }
@@ -240,9 +249,7 @@ double Game::parSolve() {
 
     // allocate device memory buffers on the GPU using cudaMalloc
     int* minesfound;
-    int* notdone;
     cudaMalloc(&minesfound,sizeof(int));
-    cudaMalloc(&notdone,sizeof(int) * gridDim.x * gridDim.y);
     cudaMalloc(&device_board,sizeof(int)*height*width);
     cudaMalloc(&device_playboard,sizeof(int)*height*width);
     cudaMalloc(&device_result,sizeof(int)*numMines*2);
@@ -274,11 +281,9 @@ double Game::parSolve() {
     int hostMinesFound = 0;
     while(hostMinesFound < numMines - 1) {
         printf("guessing\n");
-        // closer waiting
-        cudaMemset(notdone,1,sizeof(int) * gridDim.x * gridDim.y);
         
         randomMoveKernel<<<1, 1>>>(device_board, device_playboard, device_result, minesfound, height, width, numMines, devStates);
-        noGuessKernel<<<gridDim, blockDim>>>(device_board, device_playboard, device_result, minesfound, height, width, numMines, devStates,notdone);
+        noGuessKernel<<<gridDim, blockDim>>>(device_board, device_playboard, device_result, minesfound, height, width, numMines, devStates);
         cudaMemcpy(&hostMinesFound,minesfound,sizeof(int),cudaMemcpyDeviceToHost);
 
     }
