@@ -179,6 +179,8 @@ __global__ void noGuessKernel(int* device_board, int* device_playboard, int* dev
     //init shared mem
     __shared__ int sharedPlayboard[WIDTH * HEIGHT];
     // __shared__ int sharedBoard[WIDTH * HEIGHT];
+    __shared__ int notdone;
+
 
     for (int i = startheight; i < endheight; i++) {
         for (int j = startwidth; j < endwidth; j++) {
@@ -225,7 +227,13 @@ __global__ void noGuessKernel(int* device_board, int* device_playboard, int* dev
         // sharedBoard[i * width + blockstartwidth] = device_board[i * width + blockstartwidth];
     }
     __syncthreads();
-    // while(true) {
+
+
+    notdone = 1;
+    while(notdone) {
+        __syncthreads();
+        if (threadIdx.x == 0 && threadIdx.y == 0) notdone = 0;
+        __syncthreads();
         bool progress = true;
         while (progress) {
             progress = false;
@@ -239,10 +247,15 @@ __global__ void noGuessKernel(int* device_board, int* device_playboard, int* dev
                         if (unrevealed != 0 ){
                             if (adjmines == device_board[i * width + j]) { //all mines found
                                 //reveal neighbors
+
+                                if (progress == false) notdone = 1;
+
                                 progress = true;
                                 revealNeighbors(sharedPlayboard, device_board, height, width, i,j);
                             }
                             if (unrevealed == device_board[i * width + j] - adjmines && unrevealed >= 0) {
+                                if (progress == false) notdone = 1;
+
                                 progress = true;
                                 markNeighbors(sharedPlayboard, device_board, height, width, device_result, minesFound, i,j);
                             }
@@ -252,7 +265,8 @@ __global__ void noGuessKernel(int* device_board, int* device_playboard, int* dev
                 }
             }
         }
-
+        __syncthreads();
+    }
         //copy back
         for (int i = startheight; i < endheight; i++) {
             for (int j = startwidth; j < endwidth; j++) {
@@ -284,7 +298,7 @@ __global__ void noGuessKernel(int* device_board, int* device_playboard, int* dev
             }
         }
 
-    // }
+    
 }
 
 __global__ void setup_kernel( curandState* state, unsigned long seed )
