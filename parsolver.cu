@@ -210,7 +210,7 @@ __global__ void setup_kernel( curandState* state, unsigned long seed )
 }
 
 
-void Game::parSolve() {
+double Game::parSolve() {
 
     int totalBytes = sizeof(int) * height * width;
 
@@ -218,7 +218,7 @@ void Game::parSolve() {
 
     dim3 blockDim(BLOCK_DIM, BLOCK_DIM);
     dim3 gridDim((width + (blockDim.x * CHUNK_DIM) - 1) / (blockDim.x * CHUNK_DIM), (height + (blockDim.y * CHUNK_DIM) - 1) / (blockDim.y * CHUNK_DIM));
-    printf("%d %d\n",gridDim.x, gridDim.y);
+    // printf("%d %d\n",gridDim.x, gridDim.y);
 
 
     int* device_board;
@@ -282,16 +282,16 @@ void Game::parSolve() {
     }
 
     double overallDuration = endTime - startTime;
-    printf("Overall: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * overallDuration, toBW(totalBytes, overallDuration));
-    double kernelDuration = endTimeKernel - startTimeKernel;
-    printf("Kernel: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * kernelDuration, toBW(totalBytes, kernelDuration));
+    // printf("Overall: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * overallDuration, toBW(totalBytes, overallDuration));
+    // double kernelDuration = endTimeKernel - startTimeKernel;
+    // printf("Kernel: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * kernelDuration, toBW(totalBytes, kernelDuration));
 
     // free memory buffers on the GPU
     cudaFree(device_board);
     cudaFree(device_playboard);
     cudaFree(device_result);
 
-    // return overallDuration;
+    return overallDuration;
 }
 
 void

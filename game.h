@@ -23,13 +23,15 @@ public:
     Game(int w, int h, int n);
     void printBoard(int** b);
     void setMines();
+    void clearPlayboards();
+    
     int countAdjMines(int x, int y);
     int countUnrevealed(int x, int y);
     void markNeighbors(int x, int y);
     void revealNeighbors(int x, int y);
     tuple<int,int> chooseRandomMove();
     double seqSolve();
-    void parSolve();
+    double parSolve();
     bool resultCheck(int x);
 
     float toBW(int bytes, float sec);

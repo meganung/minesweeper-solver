@@ -88,7 +88,7 @@ void Game::markNeighbors(int x, int y) {
 
 double Game::seqSolve() {
 
-    int totalBytes = sizeof(int) * height * width;
+    // int totalBytes = sizeof(int) * height * width;
     double startTime = CycleTimer::currentSeconds();
 
     int guesses = 0;  
@@ -100,7 +100,7 @@ double Game::seqSolve() {
         if (board[x][y] == -1) {
             printf("\n");
             printf("oops %dth guess was a bomb big sad\n",guesses);
-            return (double)0;
+            return -1;
         } else {
             //reveal
             playboard[x][y] = 1;
@@ -135,6 +135,6 @@ double Game::seqSolve() {
 
 
     double overallDuration = endTime - startTime;
-    printf("Overall: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * overallDuration, toBW(totalBytes, overallDuration));
+    // printf("Overall: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * overallDuration, toBW(totalBytes, overallDuration));
     return overallDuration;
 }

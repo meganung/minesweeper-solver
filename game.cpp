@@ -25,6 +25,20 @@ Game::Game(int w, int h, int n) {
 
 }
 
+void Game::clearPlayboards() {
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            parplayboard[i*width + j] = 0;
+            playboard[i][j] = 0;
+        }
+    }
+    for (int i = 0; i < 2*numMines; i++) {
+        playmines[i] = 0;
+        parplaymines[i] = 0;
+    }
+    playminecount = 0;
+}
+
 
 float Game::toBW(int bytes, float sec) {
     return static_cast<float>(bytes) / (1024. * 1024. * 1024.) / sec;
