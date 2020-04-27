@@ -6,9 +6,9 @@
 using namespace std;
 
 int main(int argc,char* argv[]) {
-    int height = 400;
-    int width = 400;
-    int nummines = 75;
+    int height = 100;
+    int width = 100;
+    int nummines = 30;
     int print = 0;
     int runseq = 0;
     int runpar = 1;

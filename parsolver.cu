@@ -10,8 +10,8 @@
 
 #define BLOCK_DIM 10
 #define CHUNK_DIM 10
-#define WIDTH 400
-#define HEIGHT 400
+#define WIDTH 100
+#define HEIGHT 100
 
 using namespace std;
 
@@ -95,11 +95,9 @@ __device__  void markNeighbors(int* playboard, int* board, int height, int width
             if (xi >= 0 && xi < height && yi >= 0 && yi < width && !(i == 0 && j == 0)) {
                 if (playboard[xi * width + yi] == 0) {
                     playboard[xi * width + yi] = 1;
-                    //TODO: make atomic
-                    // (*minesFound)++;
-                    atomicAdd(minesFound, 1);
-                    device_result[*minesFound*2] = xi;
-                    device_result[*minesFound*2 + 1] = yi;
+                    int ogval = atomicAdd(minesFound, 1);
+                    device_result[(ogval+1)*2] = xi;
+                    device_result[(ogval+1)*2 + 1] = yi;
                 }
             }
         }
@@ -157,6 +155,7 @@ __global__ void parSolveKernel(int* device_board, int* device_playboard, int* de
 }
 
 __global__ void randomMoveKernel(int* device_board, int* device_playboard, int* device_result, int* minesFound, int height, int width, int numMines, curandState* globalState) {
+    printf("IM NOT HERE\n");
     int x, y;
     chooseRandomMove(device_playboard, device_board, height, width, globalState, &x, &y);
     if (device_board[x * width + y] == -1) {
@@ -167,6 +166,7 @@ __global__ void randomMoveKernel(int* device_board, int* device_playboard, int* 
     } else {
         //reveal
         device_playboard[x * width + y] = 1;
+        printf("guess: %d %d\n",x,y);
     }
 }
 
@@ -182,12 +182,16 @@ __global__ void noGuessKernel(int* device_board, int* device_playboard, int* dev
 
     for (int i = startheight; i < endheight; i++) {
         for (int j = startwidth; j < endwidth; j++) {
+            if (i * width + j < 0 || i * width + j >= width * height) {
+                printf("BAD 0\n");
+            }
             sharedPlayboard[i * width + j] = device_playboard[i * width + j];
             // sharedBoard[i * width + j] = device_board[i * width + j];
         }
     }
-    int blockstartheight = max(0,(blockIdx.y * blockDim.y) * CHUNK_DIM -1);
-    int blockendheight = min(height, blockstartheight + (CHUNK_DIM * blockDim.y) + 1);
+    int prebsh = (((blockIdx.y * blockDim.y) * CHUNK_DIM) -1);
+    int blockstartheight = max(0,prebsh);
+    int blockendheight = min(height-1, (int)(blockstartheight + (CHUNK_DIM * blockDim.y) + 1));
     int blockstartwidth = max(0,(blockIdx.x * blockDim.x) * CHUNK_DIM );
     int blockendwidth = min(width, blockstartwidth + (CHUNK_DIM * blockDim.x) );
     int blockheight = blockendheight - blockstartheight;
@@ -200,6 +204,9 @@ __global__ void noGuessKernel(int* device_board, int* device_playboard, int* dev
     threadstart = blockstartwidth + (threadid * copyamtwidth);
     threadend = min(blockendwidth, (threadstart + copyamtwidth));
     for (int i = threadstart; i < threadend; i++) {
+        if (blockstartheight * width + i < 0 || blockstartheight * width + i >= height * width || blockendheight * width + i < 0 || blockendheight * width + i >= height * width)  {
+            printf("BAD 1 blockstartheight %d width %d i %d total: %d\n",blockendheight ,width , i,blockendheight * width + i);
+        }
         sharedPlayboard[blockstartheight * width + i] = device_playboard[blockstartheight * width + i];
         // sharedBoard[blockstartheight * width + i] = device_board[blockstartheight * width + i];
         sharedPlayboard[blockendheight * width + i] = device_playboard[blockendheight * width + i];
@@ -209,9 +216,12 @@ __global__ void noGuessKernel(int* device_board, int* device_playboard, int* dev
     threadstart = blockstartheight + (threadid * copyamtheight);
     threadend = min(blockendheight, (threadstart + copyamtheight));
     for (int i = threadstart; i < threadend; i++) {
+        if (i * width + blockstartwidth < 0 || i * width + blockendwidth < 0 || i * width + blockstartwidth >= height * width || i * width + blockendwidth >= height * width) {
+            printf("BAD 2\n");
+        }
         sharedPlayboard[i * width + blockstartwidth] = device_playboard[i * width + blockstartwidth];
         // sharedBoard[i * width + blockstartwidth] = device_board[i * width + blockstartwidth];
-        sharedPlayboard[i * width + blockstartwidth] = device_playboard[i * width + blockstartwidth];
+        sharedPlayboard[i * width + blockendwidth] = device_playboard[i * width + blockendwidth];
         // sharedBoard[i * width + blockstartwidth] = device_board[i * width + blockstartwidth];
     }
     __syncthreads();
@@ -240,6 +250,37 @@ __global__ void noGuessKernel(int* device_board, int* device_playboard, int* dev
                         
                     }
                 }
+            }
+        }
+
+        //copy back
+        for (int i = startheight; i < endheight; i++) {
+            for (int j = startwidth; j < endwidth; j++) {
+                if (sharedPlayboard[i * width + j] == 1) {
+                    device_playboard[i * width + j] = sharedPlayboard[i * width + j];
+                }
+            }
+        }
+        //top and bottom
+        threadstart = blockstartwidth + (threadid * copyamtwidth);
+        threadend = min(blockendwidth, (threadstart + copyamtwidth));
+        for (int i = threadstart; i < threadend; i++) {
+            if (sharedPlayboard[blockstartheight * width + i] == 1) {
+                device_playboard[blockstartheight * width + i] = sharedPlayboard[blockstartheight * width + i];
+            }
+            if (sharedPlayboard[blockendheight * width + i] == 1) {
+                device_playboard[blockendheight * width + i] = sharedPlayboard[blockendheight * width + i];
+            }
+        }
+        //left and right
+        threadstart = blockstartheight + (threadid * copyamtheight);
+        threadend = min(blockendheight, (threadstart + copyamtheight));
+        for (int i = threadstart; i < threadend; i++) {
+            if (sharedPlayboard[i * width + blockstartwidth] == 1) {
+                device_playboard[i * width + blockstartwidth] = sharedPlayboard[i * width + blockstartwidth];
+            }
+            if (sharedPlayboard[i * width + blockstartwidth] == 1) {
+                device_playboard[i * width + blockstartwidth] = sharedPlayboard[i * width + blockstartwidth];
             }
         }
 
@@ -304,7 +345,8 @@ void Game::parSolve() {
     int hostMinesFound = 0;
     while(hostMinesFound < numMines - 1) {
         randomMoveKernel<<<1, 1>>>(device_board, device_playboard, device_result, minesfound, height, width, numMines, devStates);
-        printf("made a guess\n");
+        // printf("made a guess\n");
+
         noGuessKernel<<<gridDim, blockDim>>>(device_board, device_playboard, device_result, minesfound, height, width, numMines, devStates);
         cudaMemcpy(&hostMinesFound,minesfound,sizeof(int),cudaMemcpyDeviceToHost);
 
