@@ -29,10 +29,13 @@ public:
     int countAdjMines(int x, int y);
     int countUnrevealed(int x, int y);
     void markNeighbors(int x, int y);
+    void ompMarkNeighbors(int x, int y);
     void revealNeighbors(int x, int y);
+    void ompRevealNeighbors(int x, int y);
     tuple<int,int> chooseRandomMove();
     double seqSolve();
     double parSolve();
+    double ompSolve();
     bool resultCheck(int x);
 
     float toBW(int bytes, float sec);
