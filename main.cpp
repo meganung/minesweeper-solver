@@ -71,7 +71,7 @@ int main(int argc,char* argv[]) {
         //SEQUENTIAL
         // printf("starting SEQUENTIAL\n");
         seqtime = game->seqSolve();
-        assert(game->resultCheck(0));
+        assert(game->resultCheck());
         if (print) {
             printf("Mines found: ");
             for (int i = 0; i < game->numMines; i++) {
@@ -89,7 +89,7 @@ int main(int argc,char* argv[]) {
         // printf("starting PARALLEL\n");
         
         partime = game->parSolve();
-        assert(game->resultCheck(1));
+        assert(game->resultCheck());
         printf("Parallel Overall: %.3f ms\t\t\n", 1000.f * partime);
 
     }
@@ -99,7 +99,7 @@ int main(int argc,char* argv[]) {
     if (runomp && !test) {
         //PARALLEL OPEN MP
         omptime = game -> ompSolve();
-        assert(game->resultCheck(0));
+        assert(game->resultCheck());
         printf("OpenMP Overall: %.3f ms\t\t\n", 1000.f * omptime);
     }
 
@@ -124,8 +124,8 @@ int main(int argc,char* argv[]) {
         for (int i = 0; i < num; i++) {
             double iseq = game->seqSolve();
             double ipar = game->parSolve();
-            bool seqok = game->resultCheck(0);
-            bool parok = game->resultCheck(1);
+            bool seqok = game->resultCheck();
+            bool parok = game->resultCheck();
 
             if (!seqok) {
                 seqerr++;
@@ -160,15 +160,15 @@ int main(int argc,char* argv[]) {
         double speedupsum = 0;
         for (int i = 0; i < num; i++) {
             double iseq = game->seqSolve();
-            bool seqok = game->resultCheck(0);
+            bool seqok = game->resultCheck();
             game->clearPlayboards();
 
             double ipar = game->parSolve();
-            bool parok = game->resultCheck(1);
+            bool parok = game->resultCheck();
             game->clearPlayboards();
 
             double iomp = game->ompSolve();
-            bool ompok = game->resultCheck(0);
+            bool ompok = game->resultCheck();
 
             if (!seqok) {
                 seqerr++;

@@ -19,7 +19,6 @@ public:
     int* parboard;
     int* parplayboard;
     int* playmines; // 1d list size numMines x 2 
-    int* parplaymines; 
     int playminecount;
     Game(int w, int h, int n);
     void printBoard(int** b);
@@ -36,7 +35,7 @@ public:
     double seqSolve();
     double parSolve();
     double ompSolve();
-    bool resultCheck(int x);
+    bool resultCheck();
 
     float toBW(int bytes, float sec);
 };

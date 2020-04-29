@@ -23,7 +23,9 @@ Game::Game(int w, int h, int n) {
         playboard2[i] = (int*)calloc(width, sizeof(int));
     }
     playmines = (int*)calloc(numMines * 2, sizeof(int));
-    parplaymines = (int*)calloc(numMines * 2, sizeof(int));
+    for (int i = 0; i < numMines * 2; i++) {
+        playmines[i] = -1;
+    }
 
 }
 
@@ -36,8 +38,7 @@ void Game::clearPlayboards() {
         }
     }
     for (int i = 0; i < 2*numMines; i++) {
-        playmines[i] = 0;
-        parplaymines[i] = 0;
+        playmines[i] = -1;
     }
     playminecount = 0;
 }
@@ -87,17 +88,16 @@ void Game::printBoard(int** b) {
     }
 }
 
-bool Game::resultCheck(int x) {
+bool Game::resultCheck() {
     //TODO: check playminecount? 
     // need to use playminecount in the parallel version then
-    int* minearr = playmines;
-    if (x) {
-        //parallel
-        minearr = parplaymines;
-    }
+
     for (int i = 0; i < numMines*2; i+=2){
-        if (board[minearr[i]][minearr[i+1]] != -1) {
-            printf("RESULT CHECK FAILED: %d %d, %d\n",minearr[i],minearr[i+1],i);
+        if (playmines[i] == -1 || playmines[i+1] == -1) {
+            return false;
+        }
+        if (board[playmines[i]][playmines[i+1]] != -1) {
+            printf("RESULT CHECK FAILED: %d %d, %d\n",playmines[i],playmines[i+1],i);
             return false;
         }
     }

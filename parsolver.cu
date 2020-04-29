@@ -263,7 +263,7 @@ double Game::parSolve() {
     cudaMemset(minesfound,-1,sizeof(int));
     cudaMemcpy(device_board,parboard,sizeof(int)*width*height,cudaMemcpyHostToDevice);
     cudaMemcpy(device_playboard,parplayboard,sizeof(int)*width*height,cudaMemcpyHostToDevice);
-    cudaMemcpy(device_result,parplaymines,sizeof(int)*numMines*2,cudaMemcpyHostToDevice);
+    cudaMemcpy(device_result,playmines,sizeof(int)*numMines*2,cudaMemcpyHostToDevice);
 
     double startTimeKernel = CycleTimer::currentSeconds();
     // run kernel
@@ -291,7 +291,7 @@ double Game::parSolve() {
     double endTimeKernel = CycleTimer::currentSeconds(); 
 
     // copy result from GPU using cudaMemcpy
-    cudaMemcpy(parplaymines,device_result,sizeof(int)*2*numMines,cudaMemcpyDeviceToHost);
+    cudaMemcpy(playmines,device_result,sizeof(int)*2*numMines,cudaMemcpyDeviceToHost);
     // printf("minesfound: %d nummines: %d \n",hostMinesFound, numMines);
 
 
