@@ -66,7 +66,7 @@ int main(int argc,char* argv[]) {
         //PARALLEL
         printf("PARALLEL\n");
         
-        game->parSolve();
+        game->sharedParSolve();
         assert(game->resultCheck(1));
 
     }

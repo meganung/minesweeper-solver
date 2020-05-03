@@ -30,6 +30,7 @@ public:
     tuple<int,int> chooseRandomMove();
     double seqSolve();
     void parSolve();
+    double sharedParSolve();
     bool resultCheck(int x);
 
     float toBW(int bytes, float sec);

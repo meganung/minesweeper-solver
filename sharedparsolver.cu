@@ -310,7 +310,7 @@ __global__ void setup_kernel( curandState* state, unsigned long seed )
 }
 
 
-void Game::parSolve() {
+double Game::sharedParSolve() {
 
     int totalBytes = sizeof(int) * height * width;
 
@@ -393,7 +393,7 @@ void Game::parSolve() {
     cudaFree(device_playboard);
     cudaFree(device_result);
 
-    // return overallDuration;
+    return overallDuration;
 }
 
 void
