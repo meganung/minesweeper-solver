@@ -7,7 +7,6 @@
 //using namespace Game;
 using namespace std;
 
-//TODO? do we want to change this to store in 2 int* ? or keep as is
 tuple<int,int> Game::chooseRandomMove() {
     int xinit = rand() % height;
     int yinit = rand() % width;
@@ -98,8 +97,8 @@ double Game::seqSolve() {
         int y = get<1>(rmove);
         guesses++;
         if (board[x][y] == -1) {
-            printf("\n");
-            printf("oops %dth guess was a bomb big sad\n",guesses);
+            // printf("\n");
+            // printf("oops %dth guess was a bomb big sad\n",guesses);
             return -1;
         } else {
             //reveal

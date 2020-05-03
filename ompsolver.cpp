@@ -71,8 +71,8 @@ double Game::ompSolve() {
         int y = get<1>(rmove);
         guesses++;
         if (board[x][y] == -1) {
-            printf("\n");
-            printf("oops %dth guess was a bomb big sad\n",guesses);
+            // printf("\n");
+            // printf("oops %dth guess was a bomb big sad\n",guesses);
             return -1;
         } else {
             //reveal

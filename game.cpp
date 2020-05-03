@@ -97,7 +97,7 @@ bool Game::resultCheck() {
             return false;
         }
         if (board[playmines[i]][playmines[i+1]] != -1) {
-            printf("RESULT CHECK FAILED: %d %d, %d\n",playmines[i],playmines[i+1],i);
+            // printf("RESULT CHECK FAILED: %d %d, %d\n",playmines[i],playmines[i+1],i);
             return false;
         }
     }

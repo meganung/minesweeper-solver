@@ -118,8 +118,8 @@ __global__ void parSolveKernel(int* device_board, int* device_playboard, int* de
         chooseRandomMove(device_playboard, device_board, height, width, globalState, &x, &y);
         guesses++;
         if (device_board[x * width + y] == -1) {
-            printf("\n");
-            printf("oops %dth guess was a bomb big sad\n",guesses);
+            // printf("\n");
+            // printf("oops %dth guess was a bomb big sad\n",guesses);
             *minesFound = numMines;
             return;
         } else {
@@ -243,7 +243,6 @@ double Game::parSolve() {
     dim3 gridDim((width + (blockDim.x * CHUNK_DIM) - 1) / (blockDim.x * CHUNK_DIM), (height + (blockDim.y * CHUNK_DIM) - 1) / (blockDim.y * CHUNK_DIM));
     // printf("%d %d\n",gridDim.x, gridDim.y);
 
-
     int* device_board;
     int* device_playboard;
     int* device_result;
@@ -292,8 +291,6 @@ double Game::parSolve() {
 
     // copy result from GPU using cudaMemcpy
     cudaMemcpy(playmines,device_result,sizeof(int)*2*numMines,cudaMemcpyDeviceToHost);
-    // printf("minesfound: %d nummines: %d \n",hostMinesFound, numMines);
-
 
     // end timing after result has been copied back into host memory
     double endTime = CycleTimer::currentSeconds();
