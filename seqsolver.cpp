@@ -85,11 +85,10 @@ void Game::markNeighbors(int x, int y) {
     
 }
 
-double Game::seqSolve() {
-
+double Game::seqSolve(int iter) {
     // int totalBytes = sizeof(int) * height * width;
     double startTime = CycleTimer::currentSeconds();
-
+    srand(time(0) * iter);
     int guesses = 0;  
     while(playminecount < numMines) {
         tuple<int,int> rmove = chooseRandomMove();

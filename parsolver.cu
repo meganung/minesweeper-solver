@@ -160,8 +160,8 @@ __global__ void randomMoveKernel(int* device_board, int* device_playboard, int* 
     int x, y;
     chooseRandomMove(device_playboard, device_board, height, width, globalState, &x, &y);
     if (device_board[x * width + y] == -1) {
-        printf("\n");
-        printf("oops some guess was a bomb big sad\n");
+        // printf("\n");
+        // printf("oops some guess was a bomb big sad\n");
         *minesFound = numMines;
         return;
     } else {
@@ -233,7 +233,7 @@ __global__ void setup_kernel( curandState* state, unsigned long seed )
 }
 
 
-double Game::parSolve() {
+double Game::parSolve(int iter) {
 
     // int totalBytes = sizeof(int) * height * width;
 
@@ -241,7 +241,7 @@ double Game::parSolve() {
 
     dim3 blockDim(BLOCK_DIM, BLOCK_DIM);
     dim3 gridDim((width + (blockDim.x * CHUNK_DIM) - 1) / (blockDim.x * CHUNK_DIM), (height + (blockDim.y * CHUNK_DIM) - 1) / (blockDim.y * CHUNK_DIM));
-    // printf("%d %d\n",gridDim.x, gridDim.y);
+    printf("%d %d\n",gridDim.x, gridDim.y);
 
     int* device_board;
     int* device_playboard;
@@ -270,7 +270,7 @@ double Game::parSolve() {
     //random
     curandState* devStates;
     cudaMalloc (&devStates, width * height * sizeof(curandState));
-    srand(time(0));
+    srand(time(0) * iter);
     int seed = rand();
     setup_kernel<<<gridDim, blockDim>>>(devStates,seed);
 

@@ -8,10 +8,10 @@
 #include <curand.h>
 #include <curand_kernel.h>
 
-#define BLOCK_DIM 10
-#define CHUNK_DIM 10
-#define WIDTH 400
-#define HEIGHT 400
+#define BLOCK_DIM 5
+#define CHUNK_DIM 2
+#define WIDTH 30
+#define HEIGHT 30
 
 using namespace std;
 
@@ -117,8 +117,8 @@ __global__ void s_parSolveKernel(int* device_board, int* device_playboard, int* 
         s_chooseRandomMove(device_playboard, device_board, height, width, globalState, &x, &y);
         guesses++;
         if (device_board[x * width + y] == -1) {
-            printf("\n");
-            printf("oops %dth guess was a bomb big sad\n",guesses);
+            // printf("\n");
+            // printf("oops %dth guess was a bomb big sad\n",guesses);
             *minesFound = numMines;
             return;
         } else {
@@ -155,7 +155,6 @@ __global__ void s_parSolveKernel(int* device_board, int* device_playboard, int* 
 }
 
 __global__ void s_randomMoveKernel(int* device_board, int* device_playboard, int* device_result, int* minesFound, int height, int width, int numMines, curandState* globalState) {
-    printf("IM NOT HERE\n");
     int x, y;
     s_chooseRandomMove(device_playboard, device_board, height, width, globalState, &x, &y);
     if (device_board[x * width + y] == -1) {
@@ -309,9 +308,9 @@ __global__ void s_setup_kernel( curandState* state, unsigned long seed )
 }
 
 
-double Game::sharedParSolve() {
+double Game::sharedParSolve(int iter) {
 
-    int totalBytes = sizeof(int) * height * width;
+    // int totalBytes = sizeof(int) * height * width;
 
     // compute number of blocks and threads per block
 
@@ -347,7 +346,7 @@ double Game::sharedParSolve() {
     //random
     curandState* devStates;
     cudaMalloc (&devStates, width * height * sizeof(curandState));
-    srand(time(0));
+    srand(time(0) * iter);
     int seed = rand();
     s_setup_kernel<<<gridDim, blockDim>>>(devStates,seed);
 
@@ -381,9 +380,9 @@ double Game::sharedParSolve() {
     }
 
     double overallDuration = endTime - startTime;
-    printf("Overall: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * overallDuration, toBW(totalBytes, overallDuration));
-    double kernelDuration = endTimeKernel - startTimeKernel;
-    printf("Kernel: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * kernelDuration, toBW(totalBytes, kernelDuration));
+    // printf("Overall: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * overallDuration, toBW(totalBytes, overallDuration));
+    // double kernelDuration = endTimeKernel - startTimeKernel;
+    // printf("Kernel: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * kernelDuration, toBW(totalBytes, kernelDuration));
 
     // free memory buffers on the GPU
     cudaFree(device_board);

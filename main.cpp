@@ -6,9 +6,9 @@
 using namespace std;
 
 int main(int argc,char* argv[]) {
-    int height = 400;
-    int width = 400;
-    int nummines = 3200;
+    int height = 30;
+    int width = 30;
+    int nummines = 50;
     int print = 0;
     int runseq = 0;
     int runpar = 1;
@@ -70,7 +70,7 @@ int main(int argc,char* argv[]) {
     if (runseq) {
         //SEQUENTIAL
         // printf("starting SEQUENTIAL\n");
-        seqtime = game->seqSolve();
+        seqtime = game->seqSolve(1);
         assert(game->resultCheck());
         if (print) {
             printf("Mines found: ");
@@ -88,7 +88,7 @@ int main(int argc,char* argv[]) {
         //PARALLEL
         // printf("starting PARALLEL\n");
         
-        partime = game->parSolve();
+        partime = game->parSolve(1);
         assert(game->resultCheck());
         if (print) {
             printf("Mines found: ");
@@ -105,7 +105,7 @@ int main(int argc,char* argv[]) {
 
     if (runomp && !test) {
         //PARALLEL OPEN MP
-        omptime = game -> ompSolve();
+        omptime = game -> ompSolve(1);
         assert(game->resultCheck());
         printf("OpenMP Overall: %.3f ms\t\t\n", 1000.f * omptime);
     }
@@ -160,65 +160,62 @@ int main(int argc,char* argv[]) {
     // }
 
     if (test) {
-        int num = 100;
+        int num = 1000;
         double numsuccess = 0;
         double seqsum = 0;
         double parsum = 0;
         double ompsum = 0;
         double sharedsum = 0;
-        int seqerr = 0;
-        int parerr = 0;
-        int omperr = 0;
-        int sharederr = 0;
-        double speedupsum = 0;
+        int seqok = 0;
+        int parok = 0;
+        int ompok = 0;
+        int sharedok = 0;
         for (int i = 0; i < num; i++) {
-            double iseq = game->seqSolve();
-            bool seqok = game->resultCheck();
+            double iseq = game->seqSolve(i+1);
+            bool seqres = game->resultCheck();
             game->clearPlayboards();
 
-            double ipar = game->parSolve();
-            bool parok = game->resultCheck();
+            double ipar = game->parSolve(i+1);
+            bool parres = game->resultCheck();
             game->clearPlayboards();
 
-            double iomp = game->ompSolve();
-            bool ompok = game->resultCheck();
+            double iomp = game->ompSolve(i+1);
+            bool ompres = game->resultCheck();
             game->clearPlayboards();
 
-            double ishared = game->sharedParSolve();
-            bool sharedok = game->resultCheck();
+            double ishared = game->sharedParSolve(i+1);
+            bool sharedres = game->resultCheck();
             game->clearPlayboards();
 
-            if (!seqok) {
-                seqerr++;
+            if (seqres) {
+                seqok++;
+                seqsum += iseq;
             } 
-            if (!parok) {
-                parerr++;
+            if (parres) {
+                parok++;
+                parsum += ipar;
             }
-            if (!ompok) {
-                omperr++;
+            if (ompres) {
+                ompok++;
+                ompsum += iomp;
             }
-            if (!sharedok) {
-                sharederr++;
+            if (sharedres) {
+                sharedok++;
+                sharedsum += ishared;
             }
             if (parok && seqok && ompok && sharedok) {
                 numsuccess++;
-                seqsum += iseq;
-                parsum += ipar;
-                ompsum += iomp;
-                sharedsum += ishared;
-                speedupsum += iseq / iomp;
-                printf("%d ok: seq %0.3f ms \t cuda %0.3f ms \t omp %.3f ms \t seq/omp speedup: %0.3f \n", i, iseq * 1000.f, ipar * 1000.f, iomp * 1000.f, iseq/iomp);
+                printf("%d ok: seq %0.3f ms \t cuda %0.3f ms \t shared %0.3f ms \t omp %.3f ms \n", i, iseq * 1000.f * seqres, ipar * 1000.f * parres, ishared * 1000.f * sharedres, iomp * 1000.f * ompres);
             } else {
-                printf("%d notok\n",i);
+                printf("%d no: seq %0.3f ms \t cuda %0.3f ms \t shared %0.3f ms \t omp %.3f ms \n", i, iseq * 1000.f * seqres, ipar * 1000.f * parres, ishared * 1000.f * sharedres, iomp * 1000.f * ompres);
             }
         }
         printf("SUMMARY: \n");
-        printf("avg cuda: %0.3f ms\n",parsum * 1000.f / numsuccess);
-        printf("avg sequential: %0.3f ms\n",seqsum * 1000.f / numsuccess);
-        printf("avg omp: %0.3f ms\n",ompsum * 1000.f / numsuccess);
-        printf("avg shared: %0.3f ms\n",sharedsum * 1000.f / numsuccess);
-        printf("avg omp speedup: %0.3f \n",speedupsum / numsuccess);
-        printf("num errors: seq: %d \t cuda: %d \t shared: %d \t omp: %d\n", seqerr, parerr, sharederr, omperr);
+        printf("avg sequential: %0.3f ms\n",seqsum * 1000.f / seqok);
+        printf("avg cuda: %0.3f ms\n",parsum * 1000.f / parok);
+        printf("avg shared: %0.3f ms\n",sharedsum * 1000.f / sharedok);
+        printf("avg omp: %0.3f ms\n",ompsum * 1000.f / ompok);
+        printf("num success: seq: %d \t cuda: %d \t shared: %d \t omp: %d\n", seqok, parok, sharedok, ompok);
     }
     
 

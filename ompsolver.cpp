@@ -55,11 +55,11 @@ void Game::ompMarkNeighbors(int x, int y) {
     
 }
 
-double Game::ompSolve() {
+double Game::ompSolve(int iter) {
 
     // int totalBytes = sizeof(int) * height * width;
     double startTime = CycleTimer::currentSeconds();
-
+    srand(time(0) * iter);
     // double firsttimer = 0;
     // double secondtimer = 0;
 

@@ -32,10 +32,10 @@ public:
     void revealNeighbors(int x, int y);
     void ompRevealNeighbors(int x, int y);
     tuple<int,int> chooseRandomMove();
-    double seqSolve();
-    double parSolve();
-    double sharedParSolve();
-    double ompSolve();
+    double seqSolve(int i);
+    double parSolve(int i);
+    double sharedParSolve(int i);
+    double ompSolve(int i);
     bool resultCheck();
 
     float toBW(int bytes, float sec);
