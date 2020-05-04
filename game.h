@@ -34,6 +34,7 @@ public:
     tuple<int,int> chooseRandomMove();
     double seqSolve();
     double parSolve();
+    double sharedParSolve();
     double ompSolve();
     bool resultCheck();
 

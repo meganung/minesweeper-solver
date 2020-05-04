@@ -120,54 +120,56 @@ int main(int argc,char* argv[]) {
     }
     
 
-    if (test && !runomp) {
-        int num = 100;
-        double numsuccess = 0;
-        double seqsum = 0;
-        double parsum = 0;
-        int seqerr = 0;
-        int parerr = 0;
-        double speedupsum = 0;
-        for (int i = 0; i < num; i++) {
-            double iseq = game->seqSolve();
-            bool seqok = game->resultCheck();
-            game->clearPlayboards();
+    // if (test && !runomp) {
+    //     int num = 100;
+    //     double numsuccess = 0;
+    //     double seqsum = 0;
+    //     double parsum = 0;
+    //     int seqerr = 0;
+    //     int parerr = 0;
+    //     double speedupsum = 0;
+    //     for (int i = 0; i < num; i++) {
+    //         double iseq = game->seqSolve();
+    //         bool seqok = game->resultCheck();
+    //         game->clearPlayboards();
             
-            double ipar = game->parSolve();
-            bool parok = game->resultCheck();
-            game->clearPlayboards();
+    //         double ipar = game->parSolve();
+    //         bool parok = game->resultCheck();
+    //         game->clearPlayboards();
 
-            if (!seqok) {
-                seqerr++;
-            } 
-            if (!parok) {
-                parerr++;
-            }
-            if (parok && seqok) {
-                numsuccess++;
-                seqsum += iseq;
-                parsum += ipar;
-                speedupsum += iseq / ipar;
-                printf("%d ok: seq %0.3f ms \t cuda %0.3f ms \t speedup: %0.3f \n", i, iseq * 1000.f, ipar * 1000.f, iseq/ipar);
-            } else {
-                printf("%d notok\n",i);
-            }
-        }
-        printf("SUMMARY: \n");
-        printf("avg cuda: %0.3f ms\n",parsum * 1000.f / numsuccess);
-        printf("avg sequential: %0.3f ms\n",seqsum * 1000.f / numsuccess);
-        printf("avg speedup: %0.3f \n",speedupsum / numsuccess);
-    }
+    //         if (!seqok) {
+    //             seqerr++;
+    //         } 
+    //         if (!parok) {
+    //             parerr++;
+    //         }
+    //         if (parok && seqok) {
+    //             numsuccess++;
+    //             seqsum += iseq;
+    //             parsum += ipar;
+    //             speedupsum += iseq / ipar;
+    //             printf("%d ok: seq %0.3f ms \t cuda %0.3f ms \t speedup: %0.3f \n", i, iseq * 1000.f, ipar * 1000.f, iseq/ipar);
+    //         } else {
+    //             printf("%d notok\n",i);
+    //         }
+    //     }
+    //     printf("SUMMARY: \n");
+    //     printf("avg cuda: %0.3f ms\n",parsum * 1000.f / numsuccess);
+    //     printf("avg sequential: %0.3f ms\n",seqsum * 1000.f / numsuccess);
+    //     printf("avg speedup: %0.3f \n",speedupsum / numsuccess);
+    // }
 
-    if (test && runomp) {
+    if (test) {
         int num = 100;
         double numsuccess = 0;
         double seqsum = 0;
         double parsum = 0;
         double ompsum = 0;
+        double sharedsum = 0;
         int seqerr = 0;
         int parerr = 0;
         int omperr = 0;
+        int sharederr = 0;
         double speedupsum = 0;
         for (int i = 0; i < num; i++) {
             double iseq = game->seqSolve();
@@ -182,6 +184,10 @@ int main(int argc,char* argv[]) {
             bool ompok = game->resultCheck();
             game->clearPlayboards();
 
+            double ishared = game->sharedParSolve();
+            bool sharedok = game->resultCheck();
+            game->clearPlayboards();
+
             if (!seqok) {
                 seqerr++;
             } 
@@ -191,11 +197,15 @@ int main(int argc,char* argv[]) {
             if (!ompok) {
                 omperr++;
             }
-            if (parok && seqok && ompok) {
+            if (!sharedok) {
+                sharederr++;
+            }
+            if (parok && seqok && ompok && sharedok) {
                 numsuccess++;
                 seqsum += iseq;
                 parsum += ipar;
                 ompsum += iomp;
+                sharedsum += ishared;
                 speedupsum += iseq / iomp;
                 printf("%d ok: seq %0.3f ms \t cuda %0.3f ms \t omp %.3f ms \t seq/omp speedup: %0.3f \n", i, iseq * 1000.f, ipar * 1000.f, iomp * 1000.f, iseq/iomp);
             } else {
@@ -206,8 +216,9 @@ int main(int argc,char* argv[]) {
         printf("avg cuda: %0.3f ms\n",parsum * 1000.f / numsuccess);
         printf("avg sequential: %0.3f ms\n",seqsum * 1000.f / numsuccess);
         printf("avg omp: %0.3f ms\n",ompsum * 1000.f / numsuccess);
+        printf("avg shared: %0.3f ms\n",sharedsum * 1000.f / numsuccess);
         printf("avg omp speedup: %0.3f \n",speedupsum / numsuccess);
-        printf("num errors: seq: %d \t cuda: %d \t omp: %d\n", seqerr, parerr, omperr);
+        printf("num errors: seq: %d \t cuda: %d \t shared: %d \t omp: %d\n", seqerr, parerr, sharederr, omperr);
     }
     
 
