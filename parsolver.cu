@@ -9,7 +9,7 @@
 #include <curand_kernel.h>
 
 #define BLOCK_DIM 5
-#define CHUNK_DIM 10
+#define CHUNK_DIM 2
 
 using namespace std;
 
@@ -241,7 +241,7 @@ double Game::parSolve(int iter) {
 
     dim3 blockDim(BLOCK_DIM, BLOCK_DIM);
     dim3 gridDim((width + (blockDim.x * CHUNK_DIM) - 1) / (blockDim.x * CHUNK_DIM), (height + (blockDim.y * CHUNK_DIM) - 1) / (blockDim.y * CHUNK_DIM));
-    printf("%d %d\n",gridDim.x, gridDim.y);
+    // printf("%d %d\n",gridDim.x, gridDim.y);
 
     int* device_board;
     int* device_playboard;
@@ -309,6 +309,7 @@ double Game::parSolve(int iter) {
     cudaFree(device_board);
     cudaFree(device_playboard);
     cudaFree(device_result);
+    cudaFree(minesfound);
 
     return overallDuration;
 }

@@ -10,8 +10,8 @@
 
 #define BLOCK_DIM 5
 #define CHUNK_DIM 2
-#define WIDTH 30
-#define HEIGHT 30
+#define WIDTH 100
+#define HEIGHT 100
 
 using namespace std;
 
@@ -316,7 +316,7 @@ double Game::sharedParSolve(int iter) {
 
     dim3 blockDim(BLOCK_DIM, BLOCK_DIM);
     dim3 gridDim((width + (blockDim.x * CHUNK_DIM) - 1) / (blockDim.x * CHUNK_DIM), (height + (blockDim.y * CHUNK_DIM) - 1) / (blockDim.y * CHUNK_DIM));
-    printf("gridDim: %d, %d\n",gridDim.x, gridDim.y);
+    // printf("gridDim: %d, %d\n",gridDim.x, gridDim.y);
 
 
     int* device_board;
@@ -388,6 +388,7 @@ double Game::sharedParSolve(int iter) {
     cudaFree(device_board);
     cudaFree(device_playboard);
     cudaFree(device_result);
+    cudaFree(minesfound);
 
     return overallDuration;
 }
