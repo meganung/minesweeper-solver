@@ -89,9 +89,6 @@ void Game::printBoard(int** b) {
 }
 
 bool Game::resultCheck() {
-    //TODO: check playminecount? 
-    // need to use playminecount in the parallel version then
-
     for (int i = 0; i < numMines*2; i+=2){
         if (playmines[i] == -1 || playmines[i+1] == -1) {
             return false;
