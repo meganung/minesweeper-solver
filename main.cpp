@@ -36,7 +36,7 @@ int main(int argc,char* argv[]) {
                 test = 1;
                 break;
             default:
-                printf("Usage: ./cudaGame -h height -w width -n numMines -m 0,1,2,3 (seq, cuda, cuda w shared mem, openmp) -p (print) -t (testing) \n");
+                printf("Usage: ./minesweeper -h height -w width -n numMines -m 0,1,2,3 (seq, cuda, cuda w shared mem, openmp) -p (print) -t (testing) \n");
                 return -1;
         }
     }
